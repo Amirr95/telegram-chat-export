@@ -1,0 +1,13 @@
+ForumTopics(
+	count=4,
+	topics=[
+	],
+	messages=[
+	],
+	chats=[
+	],
+	users=[
+	],
+	pts=23,
+	order_by_create_date=False
+)

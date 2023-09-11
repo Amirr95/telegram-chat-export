@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "telethon-bot"
+version = "0.1.0"
+description = ""
+authors = ["Amirr95 <arrezvaniyan@gmail.com>"]
+readme = "README.md"
+packages = [{include = "telethon_bot"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Telethon = "^1.29.3"
+cryptg = "^0.4.0"
+python-socks = {extras = ["asyncio"], version = "^2.3.0"}
+python-telegram-bot = {extras = ["job-queue"], version = "^20.5"}
+pika = "^1.3.2"
+fastapi = "^0.103.1"
+uvicorn = "^0.23.2"
+requests = "^2.31.0"
+aiohttp = "^3.8.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

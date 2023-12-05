@@ -1,6 +1,6 @@
 .env
 anon.session
-__pycache__/telethon-api.cpython-310.pyc
+__pycache__/
 .gspread/
 *.session
 *.json

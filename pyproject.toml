@@ -8,7 +8,7 @@ packages = [{include = "telethon_bot"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-Telethon = "^1.29.3"
+Telethon = "^1.33.0"
 cryptg = "^0.4.0"
 python-socks = {extras = ["asyncio"], version = "^2.3.0"}
 python-telegram-bot = {extras = ["job-queue"], version = "^20.5"}
@@ -17,6 +17,8 @@ fastapi = "^0.103.1"
 uvicorn = "^0.23.2"
 requests = "^2.31.0"
 aiohttp = "^3.8.5"
+python-dotenv = "^1.0.0"
+gspread = "^5.12.1"
 
 
 [build-system]

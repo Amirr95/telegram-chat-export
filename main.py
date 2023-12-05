@@ -1,8 +1,16 @@
 from telethon.sync import TelegramClient
 from telethon import functions, types
-from telethon.tl.types import InputChannel
-import datetime
+from telethon.tl.types import InputChannel, User, MessageMediaDocument, MessageMediaPhoto
+
+import datetime as dt
+import gspread
+import json
 import os
+from dotenv import load_dotenv
+
+from logs import logger
+
+load_dotenv()
 
 api_id = os.getenv('api_id')
 api_hash = os.getenv('api_hash')
@@ -12,59 +20,50 @@ proxy = {
     'port': 8889,           # (mandatory) proxy port number
 }
 
+def update_sheet(chats:list[dict], date: dt.datetime):
+    worksheet = gspread.service_account(".gspread/sheet.json").open("Nabaat Admin History")
+    sheet = worksheet.worksheet("chat history")
+    logger.info("Connected to google sheet.")
+    new_rows = []
+    max_cell_length = 45000
+    for chat in chats:
+        name: str = list(chat.keys())[0]
+        message_history = "\n".join(chat[name])
+        row = [date.strftime("%Y-%m-%d"), name]
+        _ = [row.append(message_history[i:i+max_cell_length]) for i in range(0, len(message_history), max_cell_length)]
+        new_rows.append(row)
+    logger.info(f"{len(new_rows)} rows to be added...")
+    sheet.insert_rows(values=new_rows, row=2)
+    
 
-# with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
-#     result = client(functions.channels.CreateChannelRequest(
-#         title='Nabaat Questions',
-#         about='User\'s questions will appear here',
-#         megagroup=True,
-#         forum=True
-#     ))
-#     print(f"chat ID: {result.chats[0].id}")
-#     print(f"chat access hash: {result.chats[0].access_hash}")
-#     channel_id = result.chats[0].id
-#     access_hash = result.chats[0].access_hash
-#     with open('create-group.txt', 'w') as f:
-#         f.write(result.stringify())
-
-# with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
-#     result = client.get_input_entity(-1940192438)
-#     print(result.stringify())
-
-channel_id=1893146969
-access_hash=3728222131404161188
-
-
-with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
-    result = client(functions.channels.CreateForumTopicRequest(
-        channel=InputChannel(channel_id, access_hash),
-        title='getting ID (new)'
-        # icon_color=42,
-        # icon_emoji_id=-12398745604826,
-    ))
-    print(result.stringify())
-    print(result.updates[0].id)
-    with open('create-topic.txt', 'w') as f:
-        f.write(result.stringify())
-
-# with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
-#     result = client(functions.channels.GetForumTopicsRequest(
-#         channel=InputChannel(channel_id, access_hash),
-#         offset_date=datetime.datetime(2018, 6, 25),
-#         offset_id=0,
-#         offset_topic=0,
-#         limit=100,
-#         # q='some string here'
-#     ))
-#     print(result.stringify())
-#     with open('get-topics.txt', 'w') as f:
-#         f.write(result.stringify())
-
-# with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
-#     result = client(functions.channels.GetForumTopicsByIDRequest(
-#         channel=InputChannel(channel_id, access_hash),
-#         topics=[1]
-#     ))
-#     print(result.stringify())
-#     with open('get-topics-by-id.txt', 'w') as f:
-#         f.write(result.stringify())
+if __name__=="__main__":
+    with TelegramClient('anon', api_id=api_id, api_hash=api_hash, proxy=proxy) as client:
+        client.takeout(users=True)
+        MESSAGE_OFFSET = dt.date.today() - dt.timedelta(days=31)
+        DIALOG_OFFSET = dt.datetime.utcnow().replace(tzinfo=None) - dt.timedelta(days=31)
+        dialogs = client.get_dialogs()
+        chats: list[dict] = []
+        for dialog in dialogs:
+            if isinstance(dialog.entity, User):
+                if dialog.date.replace(tzinfo=None) >= DIALOG_OFFSET:
+                    # print('{}: {}'.format(dialog.id, dialog.title))
+                    if not dialog.entity.bot and dialog.name != "NabaatAdmin" and dialog.name != "Telegram":
+                        messages = []
+                        logger.info(f"{dialog.name}: {dialog.date}")
+                        for message in client.iter_messages(dialog.entity, reverse=True, offset_date=MESSAGE_OFFSET):
+                            if message.from_id: sender = "نبات‌ادمین" 
+                            else: sender = "مشتری"
+                            if isinstance(message.media, MessageMediaPhoto):
+                                messages.append(f"{sender}: ارسال عکس")
+                            if isinstance(message.media, MessageMediaDocument):
+                                messages.append(f"{sender}: ارسال سند")
+                            elif message.message:
+                                messages.append(f"{sender}: {message.message}")
+                        if messages:
+                            chats.append({dialog.name: messages})
+        
+    update_sheet(chats=chats, date=dt.datetime.today())
+    # print(out[0])
+# with open("out.json", "w", encoding="utf-8") as f:
+#     f.write(json.dumps(out, indent=2, ensure_ascii=False))
+        
